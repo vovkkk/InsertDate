@@ -194,6 +194,7 @@ class InsertDateCommand(sublime_plugin.TextCommand):
             return
 
         # Do replacements
+        self.view.set_read_only(False)
         for r in self.view.sel():
             # Insert when sel is empty to not select the contents
             if r.empty():
@@ -302,10 +303,12 @@ class InsertDatePanelCommand(sublime_plugin.TextCommand):
             self.panel_cache.append([conf['name'], text])
             self.config_map[conf['name']] = c
 
+        self.view.set_read_only(True)
         self.view.window().show_quick_panel(self.panel_cache, self.on_done)
 
     def on_done(self, index):
         if index == -1:
+            self.view.set_read_only(False)
             return
 
         name = self.panel_cache[index][0]
