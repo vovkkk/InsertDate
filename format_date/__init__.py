@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, tzinfo
 import locale
 import sys
 import time
+import os
 
 import pytz
 from pytz.exceptions import UnknownTimeZoneError
@@ -18,6 +19,39 @@ locale.setlocale(locale.LC_TIME, '')
 
 if not ST2:
     basestring = str
+
+
+if os.name == 'nt':
+    import ctypes
+    from ctypes import Structure
+    from ctypes.wintypes import WORD
+
+    class SYSTEMTIME(Structure):
+        _fields_ = [
+            ("wYear", WORD),
+            ("wMonth", WORD),
+            ("wDayOfWeek", WORD),
+            ("wDay", WORD),
+            ("wHour", WORD),
+            ("wMinute", WORD),
+            ("wSecond", WORD),
+            ("wMilliseconds", WORD)
+            ]
+
+    class datetime(datetime):
+        '''Provide correct now on Windows, even if user switches system tz'''
+        @classmethod
+        def now(cls, tz=None):
+            system_time = SYSTEMTIME()
+            ctypes.windll.kernel32.GetLocalTime(ctypes.byref(system_time))
+            return cls(system_time.wYear,
+                       system_time.wMonth,
+                       system_time.wDay,
+                       system_time.wHour,
+                       system_time.wMinute,
+                       system_time.wSecond,
+                       system_time.wMilliseconds * 1000,
+                       tzinfo=tz)
 
 
 class LocalTimezone(tzinfo):
